@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMI Calculator - Delhi House Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="logo">
+                    <i class="fas fa-home"></i>
+                    <span>Delhi House Finder</span>
+                </div>
+                <p class="nav-subtitle">AI-Powered Property Search & Valuation</p>
+            </div>
+            <div class="nav-right">
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i>
+                    Browse Properties
+                </a>
+                <a href="{{ url_for('price_prediction') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    Price Prediction
+                </a>
+                <a href="{{ url_for('emi_calculator') }}" class="nav-link active">
+                    <i class="fas fa-calculator"></i>
+                    EMI Calculator
+                </a>
+                <a href="{{ url_for('map_view') }}" class="nav-link">
+                    <i class="fas fa-map"></i>
+                    Map View
+                </a>
+                <div class="user-menu">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user }}</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content emi-page">
+        <div class="container">
+            <div class="page-header">
+                <h1>Home Loan EMI Calculator</h1>
+                <p>Plan your finances and calculate monthly repayments</p>
+            </div>
+
+            <div class="emi-container">
+                <div class="emi-left">
+                    <div class="emi-card">
+                        <div class="card-header">
+                            <i class="fas fa-calculator"></i>
+                            <div>
+                                <h2>EMI Calculator</h2>
+                                <p>Plan your home loan repayment</p>
+                            </div>
+                        </div>
+
+                        <div class="emi-inputs">
+                            <div class="input-group">
+                                <label for="loanAmount">Loan Amount</label>
+                                <div class="amount-display">₹<span id="loanAmountDisplay">50,00,000</span></div>
+                                <input type="range" id="loanAmount" min="100000" max="100000000" value="5000000" step="100000">
+                                <div class="range-labels">
+                                    <span>₹1L</span>
+                                    <span>₹10Cr</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="interestRate">Interest Rate (% p.a.)</label>
+                                <div class="amount-display"><span id="interestRateDisplay">8.5</span>%</div>
+                                <input type="range" id="interestRate" min="6" max="15" value="8.5" step="0.1">
+                                <div class="range-labels">
+                                    <span>6%</span>
+                                    <span>15%</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="loanTenure">Loan Tenure (Years)</label>
+                                <div class="amount-display"><span id="loanTenureDisplay">20</span> years</div>
+                                <input type="range" id="loanTenure" min="5" max="30" value="20" step="1">
+                                <div class="range-labels">
+                                    <span>5 years</span>
+                                    <span>30 years</span>
+                                </div>
+                            </div>
+
+                            <button onclick="calculateEMI()" class="btn-calculate">
+                                <i class="fas fa-calculator"></i>
+                                Calculate EMI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emi-right">
+                    <div class="emi-result-card">
+                        <h3>Monthly EMI</h3>
+                        <div class="emi-amount" id="emiAmount">₹43,39,284</div>
+                        <p class="emi-subtitle">per month for 20 years</p>
+
+                        <div class="emi-breakdown">
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span>Principal Amount</span>
+                                    <span class="amount" id="principalAmount">₹50.00 Lac</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill principal" style="width: 48%"></div>
+                                </div>
+                            </div>
+
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span>Total Interest</span>
+                                    <span class="amount" id="totalInterest">₹54.14 Lac</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill interest" style="width: 52%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="total-payment">
+                            <span>Total Payment</span>
+                            <span class="amount" id="totalPayment">₹1.04 Cr</span>
+                        </div>
+
+                        <div class="chart-container">
+                            <canvas id="emiChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let emiChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplayValues();
+            calculateEMI();
+        });
+
+        // Update range displays
+        document.getElementById('loanAmount').addEventListener('input', updateDisplayValues);
+        document.getElementById('interestRate').addEventListener('input', updateDisplayValues);
+        document.getElementById('loanTenure').addEventListener('input', updateDisplayValues);
+
+        function updateDisplayValues() {
+            const loanAmount = document.getElementById('loanAmount').value;
+            const interestRate = document.getElementById('interestRate').value;
+            const loanTenure = document.getElementById('loanTenure').value;
+
+            document.getElementById('loanAmountDisplay').textContent = formatAmount(loanAmount);
+            document.getElementById('interestRateDisplay').textContent = interestRate;
+            document.getElementById('loanTenureDisplay').textContent = loanTenure;
+        }
+
+        function formatAmount(amount) {
+            if (amount >= 10000000) {
+                return (amount / 10000000).toFixed(2) + ' Cr';
+            } else if (amount >= 100000) {
+                return (amount / 100000).toFixed(2) + ' Lac';
+            }
+            return amount.toLocaleString('en-IN');
+        }
+
+        async function calculateEMI() {
+            const principal = parseFloat(document.getElementById('loanAmount').value);
+            const rate = parseFloat(document.getElementById('interestRate').value);
+            const tenure = parseInt(document.getElementById('loanTenure').value);
+
+            try {
+                const response = await fetch('/api/calculate-emi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ principal, rate, tenure })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('emiAmount').textContent = '₹' + result.emi.toLocaleString('en-IN');
+                    document.getElementById('principalAmount').textContent = '₹' + formatAmount(result.principal);
+                    document.getElementById('totalInterest').textContent = '₹' + formatAmount(result.total_interest);
+                    document.getElementById('totalPayment').textContent = '₹' + formatAmount(result.total_amount);
+
+                    // Update progress bars
+                    const principalPercent = (result.principal / result.total_amount) * 100;
+                    const interestPercent = (result.total_interest / result.total_amount) * 100;
+                    
+                    document.querySelector('.progress-fill.principal').style.width = principalPercent + '%';
+                    document.querySelector('.progress-fill.interest').style.width = interestPercent + '%';
+
+                    // Update chart
+                    updateChart(result.principal, result.total_interest);
+                }
+            } catch (error) {
+                console.error('Error calculating EMI:', error);
+            }
+        }
+
+        function updateChart(principal, interest) {
+            const ctx = document.getElementById('emiChart').getContext('2d');
+            
+            if (emiChart) {
+                emiChart.destroy();
+            }
+
+            emiChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Principal', 'Interest'],
+                    datasets: [{
+                        data: [principal, interest],
+                        backgroundColor: ['#4F46E5', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 14 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

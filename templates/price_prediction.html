@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Prediction - Delhi House Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="logo">
+                    <i class="fas fa-home"></i>
+                    <span>Delhi House Finder</span>
+                </div>
+                <p class="nav-subtitle">AI-Powered Property Search & Valuation</p>
+            </div>
+            <div class="nav-right">
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i>
+                    Browse Properties
+                </a>
+                <a href="{{ url_for('price_prediction') }}" class="nav-link active">
+                    <i class="fas fa-chart-line"></i>
+                    Price Prediction
+                </a>
+                <a href="{{ url_for('emi_calculator') }}" class="nav-link">
+                    <i class="fas fa-calculator"></i>
+                    EMI Calculator
+                </a>
+                <a href="{{ url_for('map_view') }}" class="nav-link">
+                    <i class="fas fa-map"></i>
+                    Map View
+                </a>
+                <div class="user-menu">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user }}</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content prediction-page">
+        <div class="container">
+            <div class="page-header">
+                <h1>AI-Powered Price Prediction</h1>
+                <p>Get accurate property valuations using machine learning</p>
+            </div>
+
+            <div class="prediction-container">
+                <div class="prediction-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <h2>AI Price Prediction</h2>
+                            <p>Get accurate property valuation using ML</p>
+                        </div>
+                    </div>
+
+                    <form id="predictionForm" class="prediction-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <select id="location" name="location" required>
+                                    <option value="">Select Location</option>
+                                    <optgroup label="Delhi">
+                                        <option value="28.55000,77.25000">Vasant Kunj</option>
+                                        <option value="28.55100,77.18800">Greater Kailash</option>
+                                        <option value="28.60000,77.06000">Dwarka</option>
+                                        <option value="28.65195,77.23149">Rohini</option>
+                                        <option value="28.61508,77.20716">Pitampura</option>
+                                        <option value="28.69060,77.17190">Model Town</option>
+                                        <option value="28.63576,77.22445">Punjabi Bagh</option>
+                                        <option value="28.56970,77.32010">Mayur Vihar</option>
+                                        <option value="28.64260,77.30120">Preet Vihar</option>
+                                        <option value="28.56892,77.20640">Saket</option>
+                                        <option value="28.54340,77.19240">Hauz Khas</option>
+                                        <option value="28.59080,77.03890">Janakpuri</option>
+                                    </optgroup>
+                                    <optgroup label="Noida">
+                                        <option value="28.60885,77.46056">Noida Extension</option>
+                                        <option value="28.52073,77.35649">Sector 128</option>
+                                        <option value="28.53508,77.39102">Sector 137</option>
+                                        <option value="28.57540,77.35630">Sector 62</option>
+                                        <option value="28.56200,77.32640">Sector 18</option>
+                                        <option value="28.59530,77.37230">Sector 76</option>
+                                        <option value="28.54950,77.33300">Sector 50</option>
+                                    </optgroup>
+                                    <optgroup label="Greater Noida">
+                                        <option value="28.56691,77.43643">Sector 1</option>
+                                        <option value="28.47410,77.50360">Sector Alpha-1</option>
+                                        <option value="28.47520,77.48650">Sector Beta-2</option>
+                                        <option value="28.46160,77.48680">Sector Gamma-1</option>
+                                        <option value="28.60960,77.43210">Greater Noida West</option>
+                                    </optgroup>
+                                    <optgroup label="Gurgaon">
+                                        <option value="28.37424,76.95242">Sector 79</option>
+                                        <option value="28.45950,77.07260">Sector 54</option>
+                                        <option value="28.47280,77.02720">Sector 56</option>
+                                        <option value="28.42640,77.08870">DLF Phase 1</option>
+                                        <option value="28.49270,77.08950">DLF Phase 3</option>
+                                        <option value="28.41930,77.04610">Golf Course Road</option>
+                                        <option value="28.50640,77.08580">Sohna Road</option>
+                                    </optgroup>
+                                    <optgroup label="Ghaziabad">
+                                        <option value="28.64577,77.38511">Vaishali</option>
+                                        <option value="28.67230,77.43840">Indirapuram</option>
+                                        <option value="28.66010,77.40410">Kaushambi</option>
+                                        <option value="28.63230,77.41580">Vasundhara</option>
+                                        <option value="28.64070,77.35850">Crossings Republik</option>
+                                    </optgroup>
+                                    <optgroup label="Faridabad">
+                                        <option value="28.39010,77.31730">Sector 21</option>
+                                        <option value="28.41260,77.31410">Sector 16</option>
+                                        <option value="28.43360,77.30580">NIT Faridabad</option>
+                                        <option value="28.37870,77.32150">Greater Faridabad</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="property_type">Property Type</label>
+                                <select id="property_type" name="property_type" required>
+                                    <option value="Flat">Apartment</option>
+                                    <option value="Villa">Villa</option>
+                                    <option value="Builder Floor">Builder Floor</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="area">Area (sq.ft)</label>
+                                <input type="number" id="area" name="area" value="1500" min="300" max="10000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bedrooms">Bedrooms</label>
+                                <input type="number" id="bedrooms" name="bedrooms" value="3" min="1" max="10" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bathrooms">Bathrooms</label>
+                                <input type="number" id="bathrooms" name="bathrooms" value="2" min="1" max="10" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="balcony">Balconies</label>
+                                <input type="number" id="balcony" name="balcony" value="2" min="0" max="5">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="furnished_status">Furnishing Status</label>
+                                <select id="furnished_status" name="furnished_status">
+                                    <option value="">Not Specified</option>
+                                    <option value="Furnished">Furnished</option>
+                                    <option value="Semi-Furnished" selected>Semi-Furnished</option>
+                                    <option value="Unfurnished">Unfurnished</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="parking">Parking Spaces</label>
+                                <input type="number" id="parking" name="parking" value="1" min="0" max="5">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="status">Property Status</label>
+                                <select id="status" name="status">
+                                    <option value="">Not Specified</option>
+                                    <option value="Ready to Move" selected>Ready to Move</option>
+                                    <option value="Under Construction">Under Construction</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="neworold">Property Age</label>
+                                <select id="neworold" name="neworold">
+                                    <option value="">Not Specified</option>
+                                    <option value="New Property" selected>New Property</option>
+                                    <option value="Resale">Resale</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lift">Number of Lifts</label>
+                                <input type="number" id="lift" name="lift" value="2" min="0" max="10">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-predict">
+                            <i class="fas fa-magic"></i>
+                            Predict Price with AI
+                        </button>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div id="predictionResult" class="prediction-result" style="display: none;">
+                        <div class="result-card">
+                            <h3>Predicted Price</h3>
+                            <div class="predicted-price" id="predictedPrice">₹0</div>
+                            <div class="price-details">
+                                <div class="price-detail-item">
+                                    <span class="label">Price per sq.ft</span>
+                                    <span class="value" id="pricePerSqft">₹0</span>
+                                </div>
+                                <div class="price-detail-item">
+                                    <span class="label">Total Area</span>
+                                    <span class="value" id="totalArea">0 sq.ft</span>
+                                </div>
+                                <div class="price-detail-item">
+                                    <span class="label">Configuration</span>
+                                    <span class="value" id="configuration">0 BHK</span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button onclick="window.location.href='{{ url_for('emi_calculator') }}'" class="btn-secondary">
+                                    <i class="fas fa-calculator"></i>
+                                    Calculate EMI
+                                </button>
+                                <button onclick="resetForm()" class="btn-outline">
+                                    <i class="fas fa-redo"></i>
+                                    New Prediction
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const location = formData.get('location').split(',');
+            
+            const data = {
+                area: parseFloat(formData.get('area')),
+                latitude: parseFloat(location[0]),
+                longitude: parseFloat(location[1]),
+                bedrooms: parseInt(formData.get('bedrooms')),
+                bathrooms: parseInt(formData.get('bathrooms')),
+                balcony: formData.get('balcony') ? parseInt(formData.get('balcony')) : null,
+                status: formData.get('status') || null,
+                neworold: formData.get('neworold') || null,
+                parking: formData.get('parking') ? parseInt(formData.get('parking')) : null,
+                furnished_status: formData.get('furnished_status') || null,
+                lift: formData.get('lift') ? parseInt(formData.get('lift')) : null,
+                type_of_building: formData.get('property_type')
+            };
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('predictedPrice').textContent = result.formatted_price;
+                    document.getElementById('pricePerSqft').textContent = '₹' + Math.round(result.predicted_price / data.area).toLocaleString('en-IN');
+                    document.getElementById('totalArea').textContent = data.area + ' sq.ft';
+                    document.getElementById('configuration').textContent = data.bedrooms + ' BHK';
+                    document.getElementById('predictionResult').style.display = 'block';
+                    document.getElementById('predictionResult').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error making prediction. Please try again.');
+                console.error(error);
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('predictionForm').reset();
+            document.getElementById('predictionResult').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map View - Delhi House Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.css" />
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="logo">
+                    <i class="fas fa-home"></i>
+                    <span>Delhi House Finder</span>
+                </div>
+                <p class="nav-subtitle">AI-Powered Property Search & Valuation</p>
+            </div>
+            <div class="nav-right">
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <i class="fas fa-th-large"></i>
+                    Browse Properties
+                </a>
+                <a href="{{ url_for('price_prediction') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    Price Prediction
+                </a>
+                <a href="{{ url_for('emi_calculator') }}" class="nav-link">
+                    <i class="fas fa-calculator"></i>
+                    EMI Calculator
+                </a>
+                <a href="{{ url_for('map_view') }}" class="nav-link active">
+                    <i class="fas fa-map"></i>
+                    Map View
+                </a>
+                <div class="user-menu">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user }}</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content map-page">
+        <div class="map-container-full">
+            <div class="map-controls">
+                <h2><i class="fas fa-map-marked-alt"></i> Property Heatmap - Delhi NCR</h2>
+                <div class="map-search-box">
+                    <input type="text" id="mapSearchInput" placeholder="Search location..." autocomplete="off">
+                    <div id="mapSearchSuggestions" class="map-search-suggestions"></div>
+                </div>
+                <div class="map-legend">
+                    <span class="legend-title">Price Range:</span>
+                    <span class="legend-item low">Low</span>
+                    <span class="legend-item medium">Medium</span>
+                    <span class="legend-item high">High</span>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script>
+        // Get URL parameters for initial location
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialLat = parseFloat(urlParams.get('lat')) || 28.6139;
+        const initialLng = parseFloat(urlParams.get('lng')) || 77.2090;
+        const initialZoom = parseInt(urlParams.get('zoom')) || 11;
+
+        // Initialize map
+        const map = L.map('map').setView([initialLat, initialLng], initialZoom);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Search functionality
+        let searchTimeout;
+        document.getElementById('mapSearchInput').addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                document.getElementById('mapSearchSuggestions').innerHTML = '';
+                document.getElementById('mapSearchSuggestions').style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/api/search-addresses?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(addresses => {
+                        displayMapSuggestions(addresses);
+                    });
+            }, 300);
+        });
+
+        function displayMapSuggestions(addresses) {
+            const container = document.getElementById('mapSearchSuggestions');
+            
+            if (addresses.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.innerHTML = addresses.map(addr => `
+                <div class="suggestion-item" onclick="navigateToLocation(${addr.latitude}, ${addr.longitude}, '${addr.Address.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${addr.Address}</span>
+                </div>
+            `).join('');
+            
+            container.style.display = 'block';
+        }
+
+        function navigateToLocation(lat, lng, address) {
+            document.getElementById('mapSearchInput').value = address;
+            document.getElementById('mapSearchSuggestions').style.display = 'none';
+            
+            // Fly to location
+            map.flyTo([lat, lng], 15, {
+                duration: 1.5
+            });
+            
+            // Add marker at selected location
+            L.marker([lat, lng])
+                .addTo(map)
+                .bindPopup(`<b>${address}</b><br><button onclick="predictAtLocation(${lat}, ${lng})" class="popup-btn">Predict Price Here</button>`)
+                .openPopup();
+        }
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.map-search-box')) {
+                document.getElementById('mapSearchSuggestions').style.display = 'none';
+            }
+        });
+
+        // Fetch heatmap data and render
+        fetch('/api/heatmap-data')
+            .then(response => response.json())
+            .then(data => {
+                // Prepare heatmap data
+                const heatData = data.map(point => [
+                    point.latitude,
+                    point.longitude,
+                    point.intensity
+                ]);
+
+                // Add heatmap layer with enhanced visuals
+                L.heatLayer(heatData, {
+                    radius: 30,
+                    blur: 40,
+                    maxZoom: 15,
+                    max: 1.0,
+                    minOpacity: 0.4,
+                    gradient: {
+                        0.0: '#0000ff',
+                        0.15: '#00ffff',
+                        0.3: '#00ff00',
+                        0.45: '#ffff00',
+                        0.6: '#ffa500',
+                        0.75: '#ff4500',
+                        0.9: '#ff0000',
+                        1.0: '#8b0000'
+                    }
+                }).addTo(map);
+
+                // If navigated from dashboard with specific location, add marker
+                if (urlParams.get('lat') && urlParams.get('lng')) {
+                    L.marker([initialLat, initialLng])
+                        .addTo(map)
+                        .bindPopup('<b>Selected Property Location</b>')
+                        .openPopup();
+                }
+
+                // Add markers for major locations
+                const majorLocations = [
+                    { name: 'Noida Extension', lat: 28.60885, lng: 77.46056 },
+                    { name: 'Vasant Kunj', lat: 28.55000, lng: 77.25000 },
+                    { name: 'Greater Kailash', lat: 28.55100, lng: 77.18800 },
+                    { name: 'Dwarka', lat: 28.60000, lng: 77.06000 },
+                    { name: 'Gurgaon Sector 79', lat: 28.37424, lng: 76.95242 },
+                    { name: 'Vaishali, Ghaziabad', lat: 28.64577, lng: 77.38511 }
+                ];
+
+                majorLocations.forEach(loc => {
+                    const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+                    marker.bindPopup(`<b>${loc.name}</b><br>Click to view properties`);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading heatmap data:', error);
+            });
+
+        // Add click event to map
+        map.on('click', function(e) {
+            const popup = L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`
+                    <div class="map-popup">
+                        <strong>Location Selected</strong><br>
+                        Lat: ${e.latlng.lat.toFixed(5)}<br>
+                        Lng: ${e.latlng.lng.toFixed(5)}<br>
+                        <button onclick="predictAtLocation(${e.latlng.lat}, ${e.latlng.lng})" class="popup-btn">
+                            Predict Price Here
+                        </button>
+                    </div>
+                `)
+                .openOn(map);
+        });
+
+        function predictAtLocation(lat, lng) {
+            window.location.href = `/price-prediction?lat=${lat}&lng=${lng}`;
+        }
+    </script>
+</body>
+</html>

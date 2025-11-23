@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Delhi House Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-left">
+            <div class="login-content">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h1>Delhi House Finder</h1>
+                    <p class="tagline">AI-Powered Property Search & Valuation</p>
+                </div>
+
+                <form action="{{ url_for('login') }}" method="POST" class="login-form">
+                    <h2>Welcome Back</h2>
+                    <p class="subtitle">Sign in to continue to your dashboard</p>
+
+                    {% if error %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            Email Address
+                        </label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i>
+                            Password
+                        </label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="remember">
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                        <a href="#" class="forgot-password">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </button>
+
+                    <div class="demo-credentials">
+                        <p><strong>Demo Accounts:</strong></p>
+                        <p><i class="fas fa-user"></i> demo@delhihouse.com / demo123</p>
+                        <p><i class="fas fa-user"></i> test@delhihouse.com / test123</p>
+                    </div>
+                </form>
+
+                <div class="login-footer">
+                    <p>Don't have an account? <a href="#">Sign Up</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-right">
+            <div class="showcase-content">
+                <h2>Find Your Dream Home in Delhi NCR</h2>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <h3>AI Price Prediction</h3>
+                            <p>Get accurate property valuations using machine learning</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <div>
+                            <h3>Interactive Maps</h3>
+                            <p>Explore properties with detailed heatmaps and location data</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-calculator"></i>
+                        <div>
+                            <h3>EMI Calculator</h3>
+                            <p>Plan your finances with our smart loan calculator</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-building"></i>
+                        <div>
+                            <h3>Premium Properties</h3>
+                            <p>Access thousands of verified listings across Delhi NCR</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
