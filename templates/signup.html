@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - HomeAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-left">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h1>HomeAI</h1>
+                    <p class="tagline">Create your account to get started</p>
+                </div>
+
+                <div class="login-form">
+                    <h2>Sign Up</h2>
+                    <p class="subtitle">Join our platform to predict house prices and explore properties</p>
+
+                    <!-- Note about demo accounts -->
+                    <div class="demo-accounts-info" style="font-size: 13px;">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> Demo accounts (demo@homeai.com, seller@homeai.com) already exist. 
+                        Please use a different email or <a href="{{ url_for('signin') }}" style="color: var(--primary-color); text-decoration: underline;">sign in</a>.
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('signup') }}" class="auth-form">
+                        <div class="form-group">
+                            <label for="full_name">Full Name</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="password" name="password" placeholder="Create a password" required minlength="6">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required minlength="6">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role">I am a</label>
+                            <div class="role-selector">
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="buyer" checked>
+                                    <div class="role-card">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span>Buyer</span>
+                                        <small>Looking to buy property</small>
+                                    </div>
+                                </label>
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="seller">
+                                    <div class="role-card">
+                                        <i class="fas fa-store"></i>
+                                        <span>Seller</span>
+                                        <small>Selling property</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </button>
+
+                        <p class="form-footer">
+                            Already have an account? 
+                            <a href="{{ url_for('signin') }}">Sign In</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <div class="login-right">
+                <div class="gradient-overlay"></div>
+                <div class="right-content">
+                    <h2>Welcome to HomeAI</h2>
+                    <p>Join thousands of users finding their perfect home</p>
+                    <div class="features">
+                        <div class="feature">
+                            <i class="fas fa-brain"></i>
+                            <h3>AI-Powered Predictions</h3>
+                            <p>Get accurate property valuations using machine learning</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-search"></i>
+                            <h3>Browse Properties</h3>
+                            <p>Explore 7,738+ properties across Delhi NCR</p>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-calculator"></i>
+                            <h3>EMI Calculator</h3>
+                            <p>Plan your finances with our interactive tools</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters long!');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -118,10 +118,40 @@ class HousePricePredictor:
         if type_of_building is None:
             type_of_building = 'Flat'
         
-        # Calculate price_sqft if not provided
+        # Calculate price_sqft if not provided - estimate based on location
         if price_sqft is None:
-            # Use a reasonable estimate based on average
-            price_sqft = 5000.0  # Average price per sqft in Delhi NCR
+            # Estimate price per sqft based on location (latitude/longitude)
+            # Premium areas in Delhi NCR have higher price/sqft
+            
+            # South Delhi (expensive areas like Vasant Kunj, GK, Hauz Khas)
+            if 28.50 <= latitude <= 28.60 and 77.15 <= longitude <= 77.30:
+                price_sqft = 8000.0  # Premium South Delhi
+            # Central Delhi (expensive)
+            elif 28.60 <= latitude <= 28.68 and 77.18 <= longitude <= 77.25:
+                price_sqft = 7500.0  # Central Delhi
+            # Gurgaon premium sectors
+            elif 28.35 <= latitude <= 28.50 and 76.95 <= longitude <= 77.10:
+                price_sqft = 7000.0  # Gurgaon sectors
+            # West Delhi (Dwarka, Janakpuri)
+            elif 28.55 <= latitude <= 28.65 and 77.00 <= longitude <= 77.15:
+                price_sqft = 5500.0  # West Delhi
+            # North Delhi (Rohini, Model Town)
+            elif 28.65 <= latitude <= 28.72 and 77.10 <= longitude <= 77.25:
+                price_sqft = 6000.0  # North Delhi
+            # Noida (Sectors)
+            elif 28.50 <= latitude <= 28.62 and 77.30 <= longitude <= 77.40:
+                price_sqft = 5800.0  # Noida
+            # Greater Noida
+            elif 28.45 <= latitude <= 28.62 and 77.40 <= longitude <= 77.55:
+                price_sqft = 4500.0  # Greater Noida
+            # Ghaziabad (Vaishali, Indirapuram)
+            elif 28.62 <= latitude <= 28.70 and 77.35 <= longitude <= 77.45:
+                price_sqft = 5200.0  # Ghaziabad
+            # Faridabad
+            elif 28.35 <= latitude <= 28.45 and 77.25 <= longitude <= 77.35:
+                price_sqft = 4800.0  # Faridabad
+            else:
+                price_sqft = 5000.0  # Default for other areas
         
         # Create input dictionary with all required features
         input_dict = {

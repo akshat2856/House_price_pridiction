@@ -3,11 +3,13 @@ Flask Web Application for House Price Prediction
 Integrates the trained ML model with a beautiful web interface
 """
 
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from functools import wraps
 import pandas as pd
 import numpy as np
 from predict import HousePricePredictor, format_price
+from database import db, User
 import json
 import os
 
@@ -16,75 +18,143 @@ app.secret_key = 'your-secret-key-change-in-production-2024'  # Change this in p
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database
+db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'signin'
+login_manager.login_message = 'Please sign in to access this page.'
+login_manager.login_message_category = 'info'
+
 # Initialize the predictor
 predictor = HousePricePredictor('house_price_model.pkl')
 
 # Load dataset for location data
 df = pd.read_csv('Delhi_v2.csv')
 
-# Test user credentials (in production, use a database)
-USERS = {
-    'demo@delhihouse.com': 'demo123',
-    'test@delhihouse.com': 'test123'
-}
-
-# Login required decorator
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 @app.route('/')
 def index():
-    """Redirect to login if not authenticated, otherwise to dashboard"""
-    if 'user' in session:
+    """Landing page - redirect to dashboard or signin"""
+    if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    return redirect(url_for('dashboard'))  # Allow viewing dashboard without login
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Login page"""
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    """Sign up page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        full_name = request.form.get('full_name')
+        role = request.form.get('role', 'buyer')
         
-        if email in USERS and USERS[email] == password:
-            session['user'] = email
-            return redirect(url_for('dashboard'))
-        else:
-            return render_template('login.html', error='Invalid credentials')
+        # Validation
+        if not email or not password or not full_name:
+            flash('All fields are required', 'danger')
+            return render_template('signup.html')
+        
+        if password != confirm_password:
+            flash('Passwords do not match', 'danger')
+            return render_template('signup.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long', 'danger')
+            return render_template('signup.html')
+        
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already registered. Please sign in.', 'warning')
+            return redirect(url_for('signin'))
+        
+        # Create new user
+        new_user = User(email=email, full_name=full_name, role=role)
+        new_user.set_password(password)
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Account created successfully! Please sign in.', 'success')
+            return redirect(url_for('signin'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'danger')
+            print(f"Error creating user: {e}")
+            return render_template('signup.html')
     
-    return render_template('login.html')
+    return render_template('signup.html')
+
+
+@app.route('/signin', methods=['GET', 'POST'])
+def signin():
+    """Sign in page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        remember = request.form.get('remember_me')
+        
+        if not email or not password:
+            flash('Email and password are required', 'danger')
+            return render_template('signin.html')
+        
+        # Find user in database
+        user = User.query.filter_by(email=email).first()
+        
+        if user and user.check_password(password):
+            login_user(user, remember=bool(remember))
+            flash(f'Welcome back, {user.full_name}!', 'success')
+            
+            # Redirect to next page or dashboard
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password', 'danger')
+            return render_template('signin.html')
+    
+    return render_template('signin.html')
 
 
 @app.route('/logout')
+@login_required
 def logout():
     """Logout user"""
-    session.pop('user', None)
-    return redirect(url_for('login'))
+    logout_user()
+    flash('You have been logged out successfully', 'success')
+    return redirect(url_for('signin'))
 
 
 @app.route('/dashboard')
-@login_required
 def dashboard():
-    """Main dashboard page showing featured properties"""
-    # Get some sample properties from the dataset
-    sample_properties = df.head(6).to_dict('records')
-    return render_template('dashboard.html', properties=sample_properties, user=session['user'])
+    """Main dashboard page - accessible to all, but shows different content for authenticated users"""
+    return render_template('dashboard.html', user=current_user)
 
 
 @app.route('/price-prediction')
 @login_required
 def price_prediction():
-    """Price prediction page"""
+    """Price prediction page - requires authentication"""
     # Get unique locations from dataset
     locations = df.groupby(['latitude', 'longitude']).first().reset_index()[['latitude', 'longitude']].head(50).to_dict('records')
-    return render_template('price_prediction.html', locations=locations, user=session['user'])
+    return render_template('price_prediction.html', locations=locations, user=current_user)
 
 
 @app.route('/api/predict', methods=['POST'])
@@ -244,7 +314,7 @@ def api_filter_properties():
 @login_required
 def emi_calculator():
     """EMI Calculator page"""
-    return render_template('emi_calculator.html', user=session['user'])
+    return render_template('emi_calculator.html', user=current_user)
 
 
 @app.route('/api/calculate-emi', methods=['POST'])
@@ -287,7 +357,39 @@ def map_view():
     lng = request.args.get('lng', 77.2090)
     zoom = request.args.get('zoom', 11)
     
-    return render_template('map_view.html', user=session['user'], lat=lat, lng=lng, zoom=zoom)
+    return render_template('map_view.html', user=current_user, lat=lat, lng=lng, zoom=zoom)
+
+
+def init_database():
+    """Initialize database and create tables"""
+    with app.app_context():
+        db.create_all()
+        print("✅ Database tables created successfully!")
+        
+        # Check if demo users already exist
+        if User.query.filter_by(email='demo@delhihouse.com').first() is None:
+            # Create demo buyer account
+            demo_buyer = User(
+                email='demo@delhihouse.com',
+                full_name='Demo Buyer',
+                role='buyer'
+            )
+            demo_buyer.set_password('demo123')
+            db.session.add(demo_buyer)
+            
+            # Create demo seller account
+            demo_seller = User(
+                email='seller@delhihouse.com',
+                full_name='Demo Seller',
+                role='seller'
+            )
+            demo_seller.set_password('seller123')
+            db.session.add(demo_seller)
+            
+            db.session.commit()
+            print("✅ Demo accounts created successfully!")
+        else:
+            print("ℹ️  Demo accounts already exist")
 
 
 if __name__ == '__main__':
@@ -297,13 +399,16 @@ if __name__ == '__main__':
     os.makedirs('static/js', exist_ok=True)
     os.makedirs('static/images', exist_ok=True)
     
+    # Initialize database
+    init_database()
+    
     print("="*80)
-    print("  DELHI HOUSE FINDER - WEB APPLICATION")
+    print("  HOMEAI - AI-POWERED PROPERTY PLATFORM")
     print("="*80)
     print("\n🚀 Starting Flask server...")
-    print("\n📧 Test Accounts:")
-    print("   Email: demo@delhihouse.com  | Password: demo123")
-    print("   Email: test@delhihouse.com  | Password: test123")
+    print("\n📧 Demo Accounts:")
+    print("   Buyer:  demo@homeai.com     | Password: demo123")
+    print("   Seller: seller@homeai.com   | Password: seller123")
     print("\n🌐 Open in browser: http://localhost:5000")
     print("="*80 + "\n")
     

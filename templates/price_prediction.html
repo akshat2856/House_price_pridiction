@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Price Prediction - Delhi House Finder</title>
+    <title>Price Prediction - HomeAI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,7 +14,7 @@
             <div class="nav-left">
                 <div class="logo">
                     <i class="fas fa-home"></i>
-                    <span>Delhi House Finder</span>
+                    <span>HomeAI</span>
                 </div>
                 <p class="nav-subtitle">AI-Powered Property Search & Valuation</p>
             </div>
@@ -35,13 +35,24 @@
                     <i class="fas fa-map"></i>
                     Map View
                 </a>
+                {% if current_user.is_authenticated %}
                 <div class="user-menu">
                     <i class="fas fa-user-circle"></i>
-                    <span>{{ user }}</span>
-                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <span>{{ current_user.full_name }} <small>({{ current_user.role }})</small></span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 </div>
+                {% else %}
+                <div class="auth-buttons">
+                    <a href="{{ url_for('signin') }}" class="btn-signin">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </a>
+                    <a href="{{ url_for('signup') }}" class="btn-signup">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -121,6 +132,41 @@
                                         <option value="28.41260,77.31410">Sector 16</option>
                                         <option value="28.43360,77.30580">NIT Faridabad</option>
                                         <option value="28.37870,77.32150">Greater Faridabad</option>
+                                    </optgroup>
+                                    <optgroup label="South Delhi">
+                                        <option value="28.53220,77.24480">Chittaranjan Park</option>
+                                        <option value="28.54670,77.24990">Kalkaji</option>
+                                        <option value="28.56350,77.21480">Green Park</option>
+                                        <option value="28.54940,77.22640">Lajpat Nagar</option>
+                                        <option value="28.57610,77.24700">Nehru Place</option>
+                                        <option value="28.59280,77.23750">Kailash Colony</option>
+                                        <option value="28.55670,77.19800">Malviya Nagar</option>
+                                    </optgroup>
+                                    <optgroup label="West Delhi">
+                                        <option value="28.64910,77.11360">Paschim Vihar</option>
+                                        <option value="28.66580,77.12450">Ashok Vihar</option>
+                                        <option value="28.70100,77.10740">Shalimar Bagh</option>
+                                        <option value="28.68260,77.06480">Mangolpuri</option>
+                                        <option value="28.67050,77.03150">Nilothi</option>
+                                    </optgroup>
+                                    <optgroup label="East Delhi">
+                                        <option value="28.62810,77.27620">Laxmi Nagar</option>
+                                        <option value="28.61170,77.29940">Anand Vihar</option>
+                                        <option value="28.64950,77.30780">Shahdara</option>
+                                        <option value="28.60120,77.31740">Patparganj</option>
+                                        <option value="28.62480,77.33420">Dilshad Garden</option>
+                                    </optgroup>
+                                    <optgroup label="North Delhi">
+                                        <option value="28.72440,77.17450">Burari</option>
+                                        <option value="28.71060,77.21390">Timarpur</option>
+                                        <option value="28.68670,77.21890">Kamla Nagar</option>
+                                        <option value="28.70420,77.24150">Shalimar Garden</option>
+                                    </optgroup>
+                                    <optgroup label="Central Delhi">
+                                        <option value="28.63550,77.22480">Karol Bagh</option>
+                                        <option value="28.64370,77.19530">Rajendra Place</option>
+                                        <option value="28.65790,77.21950">Civil Lines</option>
+                                        <option value="28.62650,77.20780">Patel Nagar</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -225,6 +271,10 @@
                                 </div>
                             </div>
                             <div class="result-actions">
+                                <button onclick="viewOnMapFromPrediction()" class="btn-secondary" id="mapViewBtn">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    Map View
+                                </button>
                                 <button onclick="window.location.href='{{ url_for('emi_calculator') }}'" class="btn-secondary">
                                     <i class="fas fa-calculator"></i>
                                     Calculate EMI
@@ -293,6 +343,15 @@
         function resetForm() {
             document.getElementById('predictionForm').reset();
             document.getElementById('predictionResult').style.display = 'none';
+        }
+
+        function viewOnMapFromPrediction() {
+            const locationSelect = document.getElementById('location');
+            const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+            const coordinates = selectedOption.value.split(',');
+            const lat = coordinates[0];
+            const lng = coordinates[1];
+            window.location.href = `/map-view?lat=${lat}&lng=${lng}&zoom=15`;
         }
     </script>
 </body>
