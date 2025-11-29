@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Calculator - HomeAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('dashboard') }}" class="nav-logo-btn">
+                <i class="fas fa-home"></i>
+                <span>HomeAI</span>
+            </a>
+            <div class="nav-center">
+                <!-- Empty center for clean look -->
+            </div>
+            <div class="nav-user">
+                {% if current_user.is_authenticated %}
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.full_name }} <small>({{ current_user.role }})</small></span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('signin') }}" class="btn-login">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="calculator-container">
+            <div class="calculator-header">
+                <h1><i class="fas fa-wallet"></i> Budget Calculator</h1>
+                <p>Check your affordability range for buying a home</p>
+            </div>
+
+            <div class="calculator-grid">
+                <!-- Input Section -->
+                <div class="calculator-inputs">
+                    <div class="input-group">
+                        <label for="monthlyIncome">
+                            <i class="fas fa-rupee-sign"></i> Monthly Income
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₹</span>
+                            <input type="number" id="monthlyIncome" placeholder="100000" value="100000" class="enhanced-input">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="monthlyExpenses">
+                            <i class="fas fa-shopping-cart"></i> Monthly Expenses
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₹</span>
+                            <input type="number" id="monthlyExpenses" placeholder="40000" value="40000" class="enhanced-input">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="downPayment">
+                            <i class="fas fa-hand-holding-usd"></i> Down Payment Available
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₹</span>
+                            <input type="number" id="downPayment" placeholder="1000000" value="1000000" class="enhanced-input">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="loanTenure">
+                            <i class="fas fa-calendar-alt"></i> Loan Tenure
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="loanTenure" placeholder="20" value="20" min="1" max="30" class="enhanced-input">
+                            <span class="input-suffix">Years</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="interestRate">
+                            <i class="fas fa-percentage"></i> Interest Rate
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="number" id="interestRate" placeholder="8.5" value="8.5" step="0.1" min="1" max="20" class="enhanced-input">
+                            <span class="input-suffix">% per annum</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-calculate" onclick="calculateBudget()">
+                        <i class="fas fa-calculator"></i> Calculate Budget
+                    </button>
+                </div>
+
+                <!-- Result Section -->
+                <div class="calculator-results" id="budgetResults">
+                    <div class="result-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Enter your details and click "Calculate Budget" to see your home buying capacity</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <i class="fas fa-lightbulb"></i>
+                    <h3>Tip: 40% Rule</h3>
+                    <p>Banks typically allow up to 40% of your monthly income for EMI payments.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-home"></i>
+                    <h3>Down Payment</h3>
+                    <p>Most banks require 20% of property value as down payment.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Emergency Fund</h3>
+                    <p>Keep 6 months of expenses as emergency fund before buying.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function calculateBudget() {
+            const monthlyIncome = parseFloat(document.getElementById('monthlyIncome').value) || 0;
+            const monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value) || 0;
+            const downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
+            const loanTenure = parseFloat(document.getElementById('loanTenure').value) || 20;
+            const interestRate = parseFloat(document.getElementById('interestRate').value) || 8.5;
+
+            if (monthlyIncome <= 0) {
+                alert('Please enter a valid monthly income');
+                return;
+            }
+
+            // Calculate maximum EMI (40% of income minus expenses)
+            const disposableIncome = monthlyIncome - monthlyExpenses;
+            const maxEMI = Math.min(monthlyIncome * 0.4, disposableIncome * 0.7);
+
+            // Calculate maximum loan amount based on EMI
+            const monthlyRate = (interestRate / 100) / 12;
+            const numberOfPayments = loanTenure * 12;
+            const maxLoanAmount = maxEMI * ((Math.pow(1 + monthlyRate, numberOfPayments) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)));
+
+            // Calculate maximum property value
+            const maxPropertyValue = maxLoanAmount + downPayment;
+
+            // Calculate minimum and recommended property values
+            const minPropertyValue = maxPropertyValue * 0.6;
+            const recommendedPropertyValue = maxPropertyValue * 0.8;
+
+            // Display results
+            const resultsDiv = document.getElementById('budgetResults');
+            resultsDiv.innerHTML = `
+                <div class="budget-summary">
+                    <h2>Your Home Buying Budget</h2>
+                    
+                    <div class="result-card-large">
+                        <div class="result-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="result-info">
+                            <p class="result-label">Maximum Property Value</p>
+                            <p class="result-value">₹${formatPrice(maxPropertyValue)}</p>
+                        </div>
+                    </div>
+
+                    <div class="result-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Maximum Loan Amount</span>
+                            <span class="breakdown-value">₹${formatPrice(maxLoanAmount)}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Down Payment</span>
+                            <span class="breakdown-value">₹${formatPrice(downPayment)}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Maximum Monthly EMI</span>
+                            <span class="breakdown-value">₹${formatPrice(maxEMI)}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Disposable Income</span>
+                            <span class="breakdown-value">₹${formatPrice(disposableIncome)}</span>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-cards">
+                        <div class="recommendation-card safe">
+                            <h4><i class="fas fa-check-circle"></i> Safe Budget</h4>
+                            <p class="rec-value">₹${formatPrice(minPropertyValue)} - ₹${formatPrice(recommendedPropertyValue)}</p>
+                            <p class="rec-desc">Recommended for comfortable living</p>
+                        </div>
+                        <div class="recommendation-card stretch">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Stretch Budget</h4>
+                            <p class="rec-value">₹${formatPrice(recommendedPropertyValue)} - ₹${formatPrice(maxPropertyValue)}</p>
+                            <p class="rec-desc">Higher EMI burden, tight budget</p>
+                        </div>
+                    </div>
+
+                    <div class="financial-health">
+                        <h3>Financial Health Check</h3>
+                        <div class="health-metric">
+                            <span>EMI to Income Ratio:</span>
+                            <strong>${((maxEMI / monthlyIncome) * 100).toFixed(1)}%</strong>
+                            <span class="health-status ${(maxEMI / monthlyIncome) <= 0.4 ? 'good' : 'caution'}">
+                                ${(maxEMI / monthlyIncome) <= 0.4 ? '✓ Healthy' : '⚠ High'}
+                            </span>
+                        </div>
+                        <div class="health-metric">
+                            <span>Remaining after EMI:</span>
+                            <strong>₹${formatPrice(disposableIncome - maxEMI)}</strong>
+                            <span class="health-status ${(disposableIncome - maxEMI) > 20000 ? 'good' : 'caution'}">
+                                ${(disposableIncome - maxEMI) > 20000 ? '✓ Comfortable' : '⚠ Tight'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatPrice(value) {
+            if (value >= 10000000) {
+                return (value / 10000000).toFixed(2) + ' Cr';
+            } else if (value >= 100000) {
+                return (value / 100000).toFixed(2) + ' Lac';
+            } else {
+                return value.toLocaleString('en-IN');
+            }
+        }
+
+        // Calculate on page load with default values
+        window.addEventListener('DOMContentLoaded', function() {
+            calculateBudget();
+        });
+    </script>
+</body>
+</html>

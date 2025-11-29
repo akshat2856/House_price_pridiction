@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area Converter - HomeAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('dashboard') }}" class="nav-logo-btn">
+                <i class="fas fa-home"></i>
+                <span>HomeAI</span>
+            </a>
+            <div class="nav-center">
+                <!-- Empty center for clean look -->
+            </div>
+            <div class="nav-user">
+                {% if current_user.is_authenticated %}
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.full_name }} <small>({{ current_user.role }})</small></span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('signin') }}" class="btn-login">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="calculator-container">
+            <div class="calculator-header">
+                <h1><i class="fas fa-expand-arrows-alt"></i> Area Converter</h1>
+                <p>Convert one area unit into another easily</p>
+            </div>
+
+            <div class="converter-section">
+                <div class="converter-card">
+                    <div class="converter-input-group">
+                        <label>From</label>
+                        <div class="input-row">
+                            <input type="number" id="fromValue" placeholder="Enter value" value="1000" oninput="convertArea()">
+                            <select id="fromUnit" onchange="convertArea()">
+                                <option value="sqft" selected>Square Feet (sq ft)</option>
+                                <option value="sqm">Square Meter (sq m)</option>
+                                <option value="sqyd">Square Yard (sq yd)</option>
+                                <option value="acre">Acre</option>
+                                <option value="hectare">Hectare</option>
+                                <option value="bigha">Bigha</option>
+                                <option value="gaj">Gaj</option>
+                                <option value="katha">Katha</option>
+                                <option value="cent">Cent</option>
+                                <option value="marla">Marla</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="converter-swap">
+                        <button onclick="swapUnits()" class="btn-swap">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
+
+                    <div class="converter-input-group">
+                        <label>To</label>
+                        <div class="input-row">
+                            <input type="number" id="toValue" placeholder="Result" readonly>
+                            <select id="toUnit" onchange="convertArea()">
+                                <option value="sqft">Square Feet (sq ft)</option>
+                                <option value="sqm" selected>Square Meter (sq m)</option>
+                                <option value="sqyd">Square Yard (sq yd)</option>
+                                <option value="acre">Acre</option>
+                                <option value="hectare">Hectare</option>
+                                <option value="bigha">Bigha</option>
+                                <option value="gaj">Gaj</option>
+                                <option value="katha">Katha</option>
+                                <option value="cent">Cent</option>
+                                <option value="marla">Marla</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Conversions -->
+                <div class="quick-conversions">
+                    <h3>Quick Reference</h3>
+                    <div id="quickConversions"></div>
+                </div>
+            </div>
+
+            <!-- Common Conversions Table -->
+            <div class="conversion-table-section">
+                <h2>Common Area Conversions</h2>
+                <div class="table-responsive">
+                    <table class="conversion-table">
+                        <thead>
+                            <tr>
+                                <th>Unit</th>
+                                <th>Square Feet</th>
+                                <th>Square Meter</th>
+                                <th>Square Yard</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1 Square Foot</td>
+                                <td>1</td>
+                                <td>0.0929</td>
+                                <td>0.1111</td>
+                            </tr>
+                            <tr>
+                                <td>1 Square Meter</td>
+                                <td>10.764</td>
+                                <td>1</td>
+                                <td>1.196</td>
+                            </tr>
+                            <tr>
+                                <td>1 Square Yard</td>
+                                <td>9</td>
+                                <td>0.8361</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td>1 Acre</td>
+                                <td>43,560</td>
+                                <td>4,046.86</td>
+                                <td>4,840</td>
+                            </tr>
+                            <tr>
+                                <td>1 Hectare</td>
+                                <td>107,639</td>
+                                <td>10,000</td>
+                                <td>11,960</td>
+                            </tr>
+                            <tr>
+                                <td>1 Bigha</td>
+                                <td>27,225</td>
+                                <td>2,529.3</td>
+                                <td>3,025</td>
+                            </tr>
+                            <tr>
+                                <td>1 Gaj</td>
+                                <td>9</td>
+                                <td>0.8361</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td>1 Marla</td>
+                                <td>272.25</td>
+                                <td>25.29</td>
+                                <td>30.25</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>Regional Variations</h3>
+                    <p>Units like Bigha, Katha, and Marla may vary by region in India. We use standard conversions.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-ruler-combined"></i>
+                    <h3>Standard Units</h3>
+                    <p>Square Feet and Square Meters are the most commonly used units in real estate.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-calculator"></i>
+                    <h3>Accurate Results</h3>
+                    <p>All conversions are calculated using standard mathematical formulas for precision.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Conversion factors to square feet
+        const conversionFactors = {
+            'sqft': 1,
+            'sqm': 10.7639,
+            'sqyd': 9,
+            'acre': 43560,
+            'hectare': 107639,
+            'bigha': 27225, // 1 Bigha = 27225 sq ft (standard)
+            'gaj': 9, // 1 Gaj = 1 Square Yard
+            'katha': 1361.25, // 1 Katha = 1361.25 sq ft (varies by region)
+            'cent': 435.6, // 1 Cent = 435.6 sq ft
+            'marla': 272.25 // 1 Marla = 272.25 sq ft
+        };
+
+        function convertArea() {
+            const fromValue = parseFloat(document.getElementById('fromValue').value) || 0;
+            const fromUnit = document.getElementById('fromUnit').value;
+            const toUnit = document.getElementById('toUnit').value;
+
+            // Convert to square feet first, then to target unit
+            const sqFeet = fromValue * conversionFactors[fromUnit];
+            const result = sqFeet / conversionFactors[toUnit];
+
+            document.getElementById('toValue').value = result.toFixed(6);
+
+            // Update quick conversions
+            updateQuickConversions(sqFeet);
+        }
+
+        function updateQuickConversions(sqFeet) {
+            const quickDiv = document.getElementById('quickConversions');
+            const commonUnits = ['sqft', 'sqm', 'sqyd', 'acre', 'hectare'];
+            
+            let html = '<div class="quick-cards">';
+            commonUnits.forEach(unit => {
+                const value = sqFeet / conversionFactors[unit];
+                const unitName = getUnitName(unit);
+                html += `
+                    <div class="quick-card">
+                        <span class="quick-label">${unitName}</span>
+                        <span class="quick-value">${value.toFixed(4)}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            quickDiv.innerHTML = html;
+        }
+
+        function getUnitName(unit) {
+            const names = {
+                'sqft': 'Square Feet',
+                'sqm': 'Square Meter',
+                'sqyd': 'Square Yard',
+                'acre': 'Acre',
+                'hectare': 'Hectare',
+                'bigha': 'Bigha',
+                'gaj': 'Gaj',
+                'katha': 'Katha',
+                'cent': 'Cent',
+                'marla': 'Marla'
+            };
+            return names[unit] || unit;
+        }
+
+        function swapUnits() {
+            const fromUnit = document.getElementById('fromUnit').value;
+            const toUnit = document.getElementById('toUnit').value;
+            const fromValue = document.getElementById('fromValue').value;
+            const toValue = document.getElementById('toValue').value;
+
+            document.getElementById('fromUnit').value = toUnit;
+            document.getElementById('toUnit').value = fromUnit;
+            document.getElementById('fromValue').value = toValue;
+            
+            convertArea();
+        }
+
+        // Convert on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            convertArea();
+        });
+    </script>
+</body>
+</html>

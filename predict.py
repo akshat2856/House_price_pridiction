@@ -118,40 +118,120 @@ class HousePricePredictor:
         if type_of_building is None:
             type_of_building = 'Flat'
         
-        # Calculate price_sqft if not provided - estimate based on location
+        # Calculate price_sqft if not provided - estimate based on location and features
         if price_sqft is None:
-            # Estimate price per sqft based on location (latitude/longitude)
-            # Premium areas in Delhi NCR have higher price/sqft
+            # Base price per sqft based on premium location (latitude/longitude)
+            base_price = 0.0
             
-            # South Delhi (expensive areas like Vasant Kunj, GK, Hauz Khas)
+            # PREMIUM LOCATIONS - Higher base pricing (adjusted for 2025 market rates)
+            # South Delhi (Vasant Kunj, GK, Hauz Khas, Saket, Defence Colony)
             if 28.50 <= latitude <= 28.60 and 77.15 <= longitude <= 77.30:
-                price_sqft = 8000.0  # Premium South Delhi
-            # Central Delhi (expensive)
+                base_price = 16800.0  # Premium South Delhi (₹12,000 * 1.4)
+            # Central Delhi (Connaught Place, Chanakyapuri, Lutyens)
             elif 28.60 <= latitude <= 28.68 and 77.18 <= longitude <= 77.25:
-                price_sqft = 7500.0  # Central Delhi
-            # Gurgaon premium sectors
-            elif 28.35 <= latitude <= 28.50 and 76.95 <= longitude <= 77.10:
-                price_sqft = 7000.0  # Gurgaon sectors
-            # West Delhi (Dwarka, Janakpuri)
+                base_price = 21000.0  # Ultra Premium Central Delhi (₹15,000 * 1.4)
+            # Gurgaon Golf Course Road, DLF Phase 1-5
+            elif 28.40 <= latitude <= 28.50 and 77.05 <= longitude <= 77.15:
+                base_price = 15400.0  # Premium Gurgaon (₹11,000 * 1.4)
+            # Gurgaon Cyber City, MG Road
+            elif 28.35 <= latitude <= 28.45 and 76.95 <= longitude <= 77.10:
+                base_price = 13300.0  # Gurgaon Business District (₹9,500 * 1.4)
+            
+            # MID-PREMIUM LOCATIONS
+            # West Delhi (Dwarka, Janakpuri, Punjabi Bagh)
             elif 28.55 <= latitude <= 28.65 and 77.00 <= longitude <= 77.15:
-                price_sqft = 5500.0  # West Delhi
-            # North Delhi (Rohini, Model Town)
+                base_price = 10500.0  # West Delhi (₹7,500 * 1.4)
+            # North Delhi (Rohini, Pitampura, Model Town)
             elif 28.65 <= latitude <= 28.72 and 77.10 <= longitude <= 77.25:
-                price_sqft = 6000.0  # North Delhi
-            # Noida (Sectors)
+                base_price = 11200.0  # North Delhi (₹8,000 * 1.4)
+            # Noida Sectors (62-78, Expressway)
+            elif 28.55 <= latitude <= 28.62 and 77.35 <= longitude <= 77.40:
+                base_price = 11900.0  # Premium Noida (₹8,500 * 1.4)
+            # Noida General Sectors
             elif 28.50 <= latitude <= 28.62 and 77.30 <= longitude <= 77.40:
-                price_sqft = 5800.0  # Noida
-            # Greater Noida
-            elif 28.45 <= latitude <= 28.62 and 77.40 <= longitude <= 77.55:
-                price_sqft = 4500.0  # Greater Noida
-            # Ghaziabad (Vaishali, Indirapuram)
+                base_price = 9100.0  # Noida (₹6,500 * 1.4)
+            
+            # STANDARD LOCATIONS
+            # Greater Noida West (Noida Extension)
+            elif 28.45 <= latitude <= 28.55 and 77.40 <= longitude <= 77.50:
+                base_price = 6300.0  # Greater Noida West (₹4,500 * 1.4)
+            # Greater Noida (Alpha, Beta, Gamma)
+            elif 28.45 <= latitude <= 28.62 and 77.45 <= longitude <= 77.55:
+                base_price = 7700.0  # Greater Noida (₹5,500 * 1.4)
+            # Ghaziabad (Vaishali, Indirapuram, Vasundhara)
             elif 28.62 <= latitude <= 28.70 and 77.35 <= longitude <= 77.45:
-                price_sqft = 5200.0  # Ghaziabad
-            # Faridabad
+                base_price = 8400.0  # Ghaziabad (₹6,000 * 1.4)
+            # Faridabad Sectors
             elif 28.35 <= latitude <= 28.45 and 77.25 <= longitude <= 77.35:
-                price_sqft = 4800.0  # Faridabad
+                base_price = 7700.0  # Faridabad (₹5,500 * 1.4)
             else:
-                price_sqft = 5000.0  # Default for other areas
+                base_price = 8400.0  # Default for other areas (₹6,000 * 1.4)
+            
+            # ADJUST PRICING BASED ON PROPERTY FEATURES
+            price_multiplier = 1.0
+            
+            # 1. Property Type Premium
+            if type_of_building:
+                building_type_upper = type_of_building.upper()
+                if 'VILLA' in building_type_upper or 'BUNGALOW' in building_type_upper:
+                    price_multiplier *= 1.35  # Villas are 35% more expensive
+                elif 'PENTHOUSE' in building_type_upper:
+                    price_multiplier *= 1.50  # Penthouses are 50% more expensive
+                elif 'DUPLEX' in building_type_upper:
+                    price_multiplier *= 1.20  # Duplexes are 20% more expensive
+                elif 'STUDIO' in building_type_upper:
+                    price_multiplier *= 0.85  # Studios are 15% cheaper
+            
+            # 2. Furnished Status Premium
+            if furnished_status:
+                furnished_upper = furnished_status.upper()
+                if 'FURNISHED' in furnished_upper and 'SEMI' not in furnished_upper and 'UN' not in furnished_upper:
+                    price_multiplier *= 1.15  # Fully furnished 15% premium
+                elif 'SEMI' in furnished_upper:
+                    price_multiplier *= 1.08  # Semi-furnished 8% premium
+            
+            # 3. Property Age/Status Premium
+            if neworold:
+                age_upper = neworold.upper()
+                if 'NEW' in age_upper or 'UNDER CONSTRUCTION' in age_upper:
+                    price_multiplier *= 1.12  # New properties 12% premium
+            
+            if status:
+                status_upper = status.upper()
+                if 'READY' in status_upper and 'MOVE' in status_upper:
+                    price_multiplier *= 1.05  # Ready to move 5% premium
+            
+            # 4. Parking Premium (important in metro cities)
+            if parking and parking > 0:
+                if parking >= 2:
+                    price_multiplier *= 1.10  # 2+ parking spaces = 10% premium
+                else:
+                    price_multiplier *= 1.05  # 1 parking space = 5% premium
+            
+            # 5. Lift/Elevator Premium
+            if lift and lift > 0:
+                price_multiplier *= 1.08  # Having lift = 8% premium
+            
+            # 6. Balcony Premium
+            if balcony and balcony >= 2:
+                price_multiplier *= 1.06  # Multiple balconies = 6% premium
+            elif balcony and balcony > 0:
+                price_multiplier *= 1.03  # One balcony = 3% premium
+            
+            # 7. Bedroom/Bathroom Configuration Premium
+            if bedrooms >= 4:
+                price_multiplier *= 1.12  # 4+ BHK properties = 12% premium
+            elif bedrooms >= 3:
+                price_multiplier *= 1.05  # 3 BHK = 5% premium
+            
+            if bathrooms >= 3:
+                price_multiplier *= 1.05  # 3+ bathrooms = 5% premium
+            
+            # Calculate final price per sqft with all adjustments
+            price_sqft = base_price * price_multiplier
+            
+            # Cap the price_sqft to realistic values for 2025 market (₹4,000 to ₹35,000)
+            price_sqft = max(4000.0, min(35000.0, price_sqft))
         
         # Create input dictionary with all required features
         input_dict = {

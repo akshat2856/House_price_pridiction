@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Eligibility - HomeAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('dashboard') }}" class="nav-logo-btn">
+                <i class="fas fa-home"></i>
+                <span>HomeAI</span>
+            </a>
+            <div class="nav-center">
+                <!-- Empty center for clean look -->
+            </div>
+            <div class="nav-user">
+                {% if current_user.is_authenticated %}
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.full_name }} <small>({{ current_user.role }})</small></span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('signin') }}" class="btn-login">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="calculator-container">
+            <div class="calculator-header">
+                <h1><i class="fas fa-hand-holding-usd"></i> Home Loan Eligibility Calculator</h1>
+                <p>See what you can borrow for your home</p>
+            </div>
+
+            <!-- Number of Borrowers Toggle -->
+            <div class="borrowers-toggle">
+                <label>Number of Borrowers</label>
+                <div class="toggle-buttons">
+                    <button class="toggle-btn active" onclick="setBorrowers(1)">One</button>
+                    <button class="toggle-btn" onclick="setBorrowers(2)">Two</button>
+                </div>
+            </div>
+
+            <div class="calculator-grid">
+                <!-- Input Section -->
+                <div class="calculator-inputs">
+                    <!-- Borrower 1 Section -->
+                    <div class="borrower-section" id="borrower1">
+                        <h3 class="borrower-title">Primary Borrower</h3>
+                        
+                        <div class="input-group">
+                            <label for="age1">
+                                <i class="fas fa-user"></i> Your Age (Years)
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="age1" placeholder="Enter age" value="35" min="21" max="65">
+                                <span class="suffix">Years</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="occupation1">
+                                <i class="fas fa-briefcase"></i> Occupation
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="occupation1" class="enhanced-select">
+                                    <option value="salaried" selected>Salaried</option>
+                                    <option value="self-employed">Self Employed</option>
+                                    <option value="professional">Professional</option>
+                                    <option value="business">Business Owner</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="monthlyIncome1">
+                                <i class="fas fa-rupee-sign"></i> Net Income
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="monthlyIncome1" placeholder="Enter income" value="100000">
+                                <span class="suffix">Monthly</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="existingEMI1">
+                                <i class="fas fa-credit-card"></i> Existing Monthly EMI
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="existingEMI1" placeholder="Enter EMI" value="10000">
+                                <span class="suffix">Monthly</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Borrower 2 Section (Hidden by default) -->
+                    <div class="borrower-section" id="borrower2" style="display: none;">
+                        <h3 class="borrower-title">Co-Borrower</h3>
+                        
+                        <div class="input-group">
+                            <label for="age2">
+                                <i class="fas fa-user"></i> Co-Borrower Age
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="age2" placeholder="Enter age" value="32" min="21" max="65">
+                                <span class="suffix">Years</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="occupation2">
+                                <i class="fas fa-briefcase"></i> Occupation
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="occupation2" class="enhanced-select">
+                                    <option value="salaried" selected>Salaried</option>
+                                    <option value="self-employed">Self Employed</option>
+                                    <option value="professional">Professional</option>
+                                    <option value="business">Business Owner</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="monthlyIncome2">
+                                <i class="fas fa-rupee-sign"></i> Net Income
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="monthlyIncome2" placeholder="Enter income" value="80000">
+                                <span class="suffix">Monthly</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="existingEMI2">
+                                <i class="fas fa-credit-card"></i> Existing Monthly EMI
+                            </label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="existingEMI2" placeholder="Enter EMI" value="0">
+                                <span class="suffix">Monthly</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="interestRate">
+                            <i class="fas fa-percentage"></i> Rate of Interest
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="interestRate" placeholder="Enter rate" value="8.9" step="0.1" min="5" max="15">
+                            <span class="suffix">%</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="loanTenure">
+                            <i class="fas fa-calendar-alt"></i> Tenure
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="loanTenure" value="20" min="1" max="30">
+                            <span class="suffix">Years</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-calculate" onclick="calculateEligibility()">
+                        <i class="fas fa-calculator"></i> Calculate
+                    </button>
+                </div>
+
+                <!-- Result Section -->
+                <div class="calculator-results" id="eligibilityResults">
+                    <h3 class="results-title">Your Estimated Results</h3>
+                    <div class="eligibility-chart">
+                        <canvas id="eligibilityChart"></canvas>
+                    </div>
+                    <div class="eligibility-summary-box">
+                        <div class="summary-item">
+                            <span class="summary-label">You could borrow upto</span>
+                            <span class="summary-value" id="borrowAmount">₹ 67,16,630</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Payable Amount</span>
+                            <span class="summary-value payable" id="payableAmount">₹ 1,44,00,000</span>
+                        </div>
+                    </div>
+                    <div class="monthly-emi-box">
+                        <span>Monthly EMI</span>
+                        <strong id="monthlyEMI">₹ 60,000</strong>
+                    </div>
+                    <button class="btn-apply-loan">
+                        Apply for Loan
+                    </button>
+                    <p class="easy-text">It's easy with HomeAI</p>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>FOIR Method</h3>
+                    <p>Banks use Fixed Obligation to Income Ratio (FOIR) of 40-60% to determine loan eligibility.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-clock"></i>
+                    <h3>Age Factor</h3>
+                    <p>Maximum loan tenure = Retirement age (60) - Current age. Affects your eligibility.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Documents Needed</h3>
+                    <p>Income proof, ID proof, address proof, property documents are required.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let borrowersCount = 1;
+        let eligibilityChart = null;
+
+        function setBorrowers(count) {
+            borrowersCount = count;
+            
+            // Update button states
+            document.querySelectorAll('.toggle-btn').forEach((btn, idx) => {
+                if (idx + 1 === count) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Show/hide co-borrower section
+            const borrower2 = document.getElementById('borrower2');
+            if (count === 2) {
+                borrower2.style.display = 'block';
+            } else {
+                borrower2.style.display = 'none';
+            }
+            
+            calculateEligibility();
+        }
+
+        function calculateEligibility() {
+            // Get primary borrower details
+            const monthlyIncome1 = parseFloat(document.getElementById('monthlyIncome1').value) || 0;
+            const existingEMI1 = parseFloat(document.getElementById('existingEMI1').value) || 0;
+            const age1 = parseInt(document.getElementById('age1').value) || 35;
+            
+            // Get co-borrower details if applicable
+            let monthlyIncome2 = 0;
+            let existingEMI2 = 0;
+            let age2 = age1;
+            
+            if (borrowersCount === 2) {
+                monthlyIncome2 = parseFloat(document.getElementById('monthlyIncome2').value) || 0;
+                existingEMI2 = parseFloat(document.getElementById('existingEMI2').value) || 0;
+                age2 = parseInt(document.getElementById('age2').value) || 32;
+            }
+            
+            const interestRate = parseFloat(document.getElementById('interestRate').value) || 8.9;
+            const loanTenure = parseInt(document.getElementById('loanTenure').value) || 20;
+
+            // Calculate total income and EMI
+            const totalIncome = monthlyIncome1 + monthlyIncome2;
+            const totalExistingEMI = existingEMI1 + existingEMI2;
+
+            if (totalIncome <= 0) {
+                alert('Please enter valid monthly income');
+                return;
+            }
+
+            // Calculate maximum allowed EMI using FOIR (50%)
+            const foir = 0.50;
+            const maxAllowedEMI = (totalIncome * foir) - totalExistingEMI;
+
+            // Calculate eligible loan amount
+            const monthlyRate = (interestRate / 100) / 12;
+            const numberOfPayments = loanTenure * 12;
+            const eligibleLoanAmount = maxAllowedEMI * ((Math.pow(1 + monthlyRate, numberOfPayments) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)));
+
+            // Age-based tenure adjustment (use younger borrower's age for better tenure)
+            const youngerAge = borrowersCount === 2 ? Math.min(age1, age2) : age1;
+            const maxTenure = Math.min(loanTenure, 60 - youngerAge);
+            const adjustedNumberOfPayments = maxTenure * 12;
+            const adjustedLoanAmount = maxAllowedEMI * ((Math.pow(1 + monthlyRate, adjustedNumberOfPayments) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, adjustedNumberOfPayments)));
+
+            // Calculate total payment
+            const finalLoanAmount = maxTenure < loanTenure ? adjustedLoanAmount : eligibleLoanAmount;
+            const finalTenure = maxTenure < loanTenure ? maxTenure : loanTenure;
+            const totalAmount = maxAllowedEMI * finalTenure * 12;
+
+            // Update UI
+            document.getElementById('borrowAmount').textContent = '₹ ' + formatIndianPrice(finalLoanAmount);
+            document.getElementById('payableAmount').textContent = '₹ ' + formatIndianPrice(totalAmount);
+            document.getElementById('monthlyEMI').textContent = '₹ ' + formatIndianPrice(maxAllowedEMI);
+
+            // Update chart
+            updateChart(finalLoanAmount, totalAmount - finalLoanAmount, finalTenure);
+        }
+
+        function updateChart(principal, interest, tenure) {
+            const ctx = document.getElementById('eligibilityChart').getContext('2d');
+            
+            if (eligibilityChart) {
+                eligibilityChart.destroy();
+            }
+
+            // Create area chart data
+            const years = [];
+            const principalData = [];
+            const interestData = [];
+            
+            for (let i = 0; i <= tenure; i++) {
+                years.push(i);
+                const remainingPrincipal = principal * (1 - i / tenure);
+                const paidInterest = interest * (i / tenure);
+                principalData.push(remainingPrincipal);
+                interestData.push(paidInterest + remainingPrincipal);
+            }
+
+            eligibilityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Principal',
+                        data: principalData,
+                        backgroundColor: 'rgba(31, 41, 55, 0.8)',
+                        borderColor: 'rgba(31, 41, 55, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    }, {
+                        label: 'Total Payment',
+                        data: interestData,
+                        backgroundColor: 'rgba(52, 211, 153, 0.6)',
+                        borderColor: 'rgba(52, 211, 153, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time (in years)'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Amount (in Lacs)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 100000).toFixed(0) + ' L';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatIndianPrice(value) {
+            if (value >= 10000000) {
+                return (value / 10000000).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
+            } else if (value >= 100000) {
+                return (value / 100000).toFixed(2).replace(/\.?0+$/, '') + ' Lac';
+            } else {
+                return value.toLocaleString('en-IN');
+            }
+        }
+
+        // Calculate on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            calculateEligibility();
+        });
+    </script>
+</body>
+</html>

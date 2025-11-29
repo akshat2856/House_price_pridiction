@@ -134,7 +134,80 @@
             </div>
         </section>
 
+        <!-- Popular Tools Section -->
+        <section class="popular-tools-section">
+            <div class="container">
+                <div class="tools-header">
+                    <div class="tools-header-left">
+                        <h2 class="tools-title">Use Popular Tools</h2>
+                        <p class="tools-subtitle">Go from browsing to buying</p>
+                    </div>
+                    <button class="btn-view-insights" onclick="showLockedMessage()">
+                        <span>View all Insights</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="tools-grid">
+                    <!-- Budget Calculator Card -->
+                    <div class="tool-card" onclick="window.location.href='/budget-calculator'">
+                        <div class="tool-icon budget-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="tool-content">
+                            <h3 class="tool-title">Budget Calculator</h3>
+                            <p class="tool-description">Check your affordability range for buying a home</p>
+                        </div>
+                        <div class="tool-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- EMI Calculator Card -->
+                    <div class="tool-card tool-card-active" onclick="window.location.href='{{ url_for('emi_calculator') }}'">
+                        <div class="tool-icon emi-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="tool-content">
+                            <h3 class="tool-title">EMI Calculator</h3>
+                            <p class="tool-description">Calculate your home-loan EMIs</p>
+                        </div>
+                        <div class="tool-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Loan Eligibility Card -->
+                    <div class="tool-card" onclick="window.location.href='/loan-eligibility'">
+                        <div class="tool-icon loan-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="tool-content">
+                            <h3 class="tool-title">Loan Eligibility</h3>
+                            <p class="tool-description">See what you can borrow for your home</p>
+                        </div>
+                        <div class="tool-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Area Converter Card -->
+                    <div class="tool-card" onclick="window.location.href='/area-converter'">
+                        <div class="tool-icon area-icon">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </div>
+                        <div class="tool-content">
+                            <h3 class="tool-title">Area Converter</h3>
+                            <p class="tool-description">Convert one area into another easily</p>
+                        </div>
+                        <div class="tool-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
+
     </main>
 
     <!-- Property Details Modal -->
@@ -268,7 +341,11 @@
                 return;
             }
             
-            grid.innerHTML = properties.map((prop, index) => `
+            // Show only first 8 properties (2 rows of 4)
+            const displayedProperties = properties.slice(0, 8);
+            const hasMore = properties.length > 8;
+            
+            grid.innerHTML = displayedProperties.map((prop, index) => `
                 <div class="property-card">
                     <div class="property-image">
                         <img src="${getPropertyImage(index)}" alt="${prop.type_of_building || 'Property'}" onerror="this.src='https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=400&h=300'">
@@ -298,6 +375,61 @@
                     </div>
                 </div>
             `).join('');
+            
+            // Add "Browse More" button if there are more properties
+            if (hasMore) {
+                grid.innerHTML += `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 30px 0;">
+                        <button onclick="showAllProperties()" class="btn-browse-more">
+                            <i class="fas fa-th"></i> Browse More Properties (${properties.length - 8} more)
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function showAllProperties() {
+            const grid = document.getElementById('propertiesGrid');
+            
+            grid.innerHTML = allProperties.map((prop, index) => `
+                <div class="property-card">
+                    <div class="property-image">
+                        <img src="${getPropertyImage(index)}" alt="${prop.type_of_building || 'Property'}" onerror="this.src='https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=400&h=300'">
+                        <span class="property-badge">${prop.type_of_building || 'Property'}</span>
+                        <span class="property-price">${formatPrice(prop.price)}</span>
+                    </div>
+                    <div class="property-content">
+                        <h3>${getPropertyTitle(prop)}</h3>
+                        <p class="property-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${prop.Address || 'Delhi NCR'}
+                        </p>
+                        <p class="property-description">
+                            ${getPropertyDescription(prop)}
+                        </p>
+                        <div class="property-features">
+                            <span><i class="fas fa-bed"></i> ${prop.Bedrooms || 0} Beds</span>
+                            <span><i class="fas fa-bath"></i> ${prop.Bathrooms || 0} Baths</span>
+                            <span><i class="fas fa-ruler-combined"></i> ${prop.area || 0} sq ft</span>
+                        </div>
+                        <div class="property-actions">
+                            <button class="view-details-btn" onclick="viewPropertyDetails(${index})">View Details</button>
+                            <button class="view-map-btn" onclick="viewOnMap(${prop.latitude}, ${prop.longitude})">
+                                <i class="fas fa-map"></i> Map
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add "Show Less" button
+            grid.innerHTML += `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 30px 0;">
+                    <button onclick="displayProperties(allProperties)" class="btn-browse-more">
+                        <i class="fas fa-chevron-up"></i> Show Less
+                    </button>
+                </div>
+            `;
         }
 
         function getPropertyImage(index) {

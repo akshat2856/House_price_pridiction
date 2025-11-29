@@ -40,15 +40,31 @@ class HousePricePreprocessor:
         
     def load_data(self):
         """
-        Load the dataset from CSV file.
+        Load the dataset from CSV file and apply price inflation adjustment.
         
         Returns:
         --------
-        pd.DataFrame : Loaded dataset
+        pd.DataFrame : Loaded dataset with adjusted prices
         """
         print("Loading dataset...")
         self.df = pd.read_csv(self.data_path)
-        print(f"Dataset loaded successfully!")
+        
+        # Apply 1.4x price inflation adjustment (4-year appreciation)
+        if 'price' in self.df.columns:
+            print("\n🔄 Applying price inflation adjustment (1.4x for 4-year appreciation)...")
+            original_mean_price = self.df['price'].mean()
+            self.df['price'] = self.df['price'] * 1.4
+            
+            # Also adjust Price_sqft if it exists
+            if 'Price_sqft' in self.df.columns:
+                self.df['Price_sqft'] = self.df['Price_sqft'] * 1.4
+            
+            adjusted_mean_price = self.df['price'].mean()
+            print(f"   Original average price: ₹{original_mean_price/100000:.2f} Lac")
+            print(f"   Adjusted average price: ₹{adjusted_mean_price/100000:.2f} Lac")
+            print(f"   ✅ Prices increased by 40% to reflect current market rates")
+        
+        print(f"\nDataset loaded successfully!")
         print(f"Shape: {self.df.shape}")
         print(f"\nFirst few rows:")
         print(self.df.head())

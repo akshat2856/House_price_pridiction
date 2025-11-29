@@ -272,9 +272,8 @@ def api_property_details(property_id):
 
 
 @app.route('/api/filter-properties')
-@login_required
 def api_filter_properties():
-    """Filter properties based on criteria"""
+    """Filter properties based on criteria - accessible to all users"""
     # Get filter parameters
     min_price = request.args.get('min_price', type=float)
     max_price = request.args.get('max_price', type=float)
@@ -315,6 +314,27 @@ def api_filter_properties():
 def emi_calculator():
     """EMI Calculator page"""
     return render_template('emi_calculator.html', user=current_user)
+
+
+@app.route('/budget-calculator')
+@login_required
+def budget_calculator():
+    """Budget Calculator page"""
+    return render_template('budget_calculator.html', user=current_user)
+
+
+@app.route('/loan-eligibility')
+@login_required
+def loan_eligibility():
+    """Loan Eligibility Calculator page"""
+    return render_template('loan_eligibility.html', user=current_user)
+
+
+@app.route('/area-converter')
+@login_required
+def area_converter():
+    """Area Converter page"""
+    return render_template('area_converter.html', user=current_user)
 
 
 @app.route('/api/calculate-emi', methods=['POST'])
@@ -412,4 +432,5 @@ if __name__ == '__main__':
     print("\n🌐 Open in browser: http://localhost:5000")
     print("="*80 + "\n")
     
-    app.run(debug=True, port=5000)
+    # Run with Flask's built-in server
+    app.run(host='127.0.0.1', port=5000, debug=True)
